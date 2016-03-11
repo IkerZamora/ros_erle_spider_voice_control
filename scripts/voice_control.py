@@ -2,7 +2,6 @@ import time, sys, json
 import rospy
 from sensor_msgs.msg import Joy
 import speech_recognition as sr
-import atexit
 
 with open('google.key', 'r') as f:
     google_key = f.readline()
@@ -132,59 +131,39 @@ def left(pub):
 		pub.publish(msg)
 		rate.sleep()
 
-#def stop(pub):
-#	print("Shuting down...")
-#	msg = Joy()
-#	msg.header.stamp = rospy.Time.now()
-#	valueAxe = 0.0
-#	valueButton = 0
-#	for i in range (0, 20):
-#		msg.axes.append(valueAxe)
-#	for e in range (0, 17):
-#		msg.buttons.append(valueButton)
-#	rate = rospy.Rate(10)
-#	time.sleep(1)
-#	pub.publish(msg)
-#	rate.sleep()
-#	print("Bye!")
-
-def main():
+def callback():
 	rospy.init_node("voice_control", anonymous=True)
 	pub = rospy.Publisher("/joy", Joy, queue_size=10)
-	#atexit.register(stop, pub)
 
+	# obtain audio from the microphone
+	r = sr.Recognizer()	
+	with sr.Microphone() as source:
+	    print("Say something!")
+	    audio = r.listen(source)
+
+	# recognize speech using Google Speech Recognition
 	try:
-		while(True):
-			# obtain audio from the microphone
-			r = sr.Recognizer()	
-			with sr.Microphone() as source:
-			    print("Say something!")
-			    audio = r.listen(source)
+		text = r.recognize_google(audio, key=google_key, language = "en-US")
+		text = text.lower()
+		print("Google Speech Recognition thinks you said "+text)
+		if "back" in text or "bakh" in text:
+			backwards(pub)
+		elif "left" in text or "levt" in text:
+			left(pub)
+		elif "right" in text:
+			right(pub)
+		elif "stand" in text or "up" in text:
+			ready(pub)
+		elif "forward" in text or "fort worth" in text or "for what" in text or "walk" in text or "walt" in text or "world" in text or "what" in text:
+			forward(pub)
+		else:
+			print("Unknown command '" + text +"'")
 
-			# recognize speech using Google Speech Recognition
-			try:
-				text = r.recognize_google(audio, key=google_key, language = "en-US")
-				text = text.lower()
-				print("Google Speech Recognition thinks you said "+text)
-				if "back" in text or "bakh" in text:
-					backwards(pub)
-				elif "left" in text or "levt" in text:
-					left(pub)
-				elif "right" in text:
-					right(pub)
-				elif "stand" in text or "up" in text:
-					ready(pub)
-				elif "forward" in text or "fort worth" in text or "for what" in text or "walk" in text or "walt" in text or "world" in text or "what" in text:
-					forward(pub)
-				else:
-					print("Unknown command '" + text +"'")
+	except sr.UnknownValueError:
+		print("Google Speech Recognition could not understand audio")
+	except sr.RequestError as e:
+		print("Could not request results from Google Speech Recognition service; {0}".format(e))
 
-			except sr.UnknownValueError:
-				print("Google Speech Recognition could not understand audio")
-			except sr.RequestError as e:
-				print("Could not request results from Google Speech Recognition service; {0}".format(e))
-	except KeyBoardInterrupt:
-		print("Exiting...")
 
 if __name__ == "__main__":
     main()
