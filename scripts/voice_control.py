@@ -136,15 +136,11 @@ def main():
 	pub = rospy.Publisher("/joy", Joy, queue_size=10)
 
 	# obtain audio from the microphone
-	r = sr.Recognizer()
-	#t = 5
-	#while t:
-	#	print("Listening in " + str(t) + "s" + '\r')
-	#	t=t-1
-	#	time.sleep(1)
+	r = sr.Recognizer()	
 	with sr.Microphone() as source:
 	    print("Say something!")
 	    audio = r.listen(source)
+
 	# recognize speech using Google Speech Recognition
 	try:
 		text = r.recognize_google(audio, key=google_key, language = "en-US")
@@ -152,19 +148,14 @@ def main():
 		print("Google Speech Recognition thinks you said "+text)
 		if "back" in text or "bakh" in text:
 			backwards(pub)
-			#print("BACKWARDS!")
 		elif "left" in text or "levt" in text:
 			left(pub)
-			print("LEFT!")
 		elif "right" in text:
 			right(pub)
-			#print("RIGHT!")
 		elif "stand" in text or "up" in text:
 			ready(pub)
-			#print("READY!")
 		elif "forward" in text or "fort worth" in text or "for what" in text or "walk" in text or "walt" in text or "world" in text or "what" in text:
 			forward(pub)
-			#print("FORWARD!")
 		else:
 			print("Unknown command '" + text +"'")
 
